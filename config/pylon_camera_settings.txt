@@ -26,7 +26,7 @@ DigitalShift	0
 RemoveParameterLimitSelector	Gain
 RemoveParameterLimit	0
 RemoveParameterLimitSelector	Gain
-LightSourcePreset	Daylight5000K
+LightSourcePreset	Tungsten2800K
 ColorAdjustmentSelector	Red
 ColorAdjustmentHue	0.15625
 ColorAdjustmentSelector	Yellow
@@ -76,7 +76,7 @@ ColorTransformationSelector	RGBtoRGB
 ColorTransformationValueSelector	Gain00
 ShutterMode	Global
 ExposureMode	Timed
-ExposureTime	1500.0
+ExposureTime	5500.0
 AcquisitionBurstFrameCount	1
 TriggerSelector	FrameBurstStart
 TriggerMode	Off

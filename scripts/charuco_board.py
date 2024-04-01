@@ -10,8 +10,8 @@ from trifinger_cameras.charuco_board_handler import CharucoBoardHandler
 from trifinger_cameras.camera_calibration_file import CameraCalibrationFile
 
 
-BOARD_SIZE_X = 5
-BOARD_SIZE_Y = 10
+BOARD_SIZE_X = 7 
+BOARD_SIZE_Y = 5
 BOARD_SQUARE_SIZE = 0.04
 BOARD_MARKER_SIZE = 0.03
 
@@ -69,9 +69,9 @@ def main():
     if args.action == "create_board":
         if not args.filename:
             raise RuntimeError("Filename not specified.")
-        handler.save_board(args.filename)
+        handler.save_board(args.filename, dpi=1200)
     elif args.action == "detect_live":
-        handler.detect_board_in_camera_stream()
+        handler.detect_board_in_camera_stream(device=1)
     elif args.action == "detect_image":
         if not args.filename:
             raise RuntimeError("Filename not specified.")

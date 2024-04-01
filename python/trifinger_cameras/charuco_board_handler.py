@@ -38,7 +38,8 @@ class CharucoBoardHandler:
         """Initialize board with hard-coded parameters."""
         # use AprilTag 16h5 which contains 30 4x4 markers
         self.marker_dict = cv2.aruco.getPredefinedDictionary(
-            cv2.aruco.DICT_APRILTAG_16h5
+            #cv2.aruco.DICT_APRILTAG_16h5
+            cv2.aruco.DICT_4X4_50
         )
 
         self.size_x = size_x
@@ -46,14 +47,13 @@ class CharucoBoardHandler:
         self.square_size = square_size
         self.marker_size = marker_size
 
-        self.board = cv2.aruco.CharucoBoard_create(
-            self.size_x,
-            self.size_y,
+        self.board = cv2.aruco.CharucoBoard(
+            (self.size_x, self.size_y),
             self.square_size,
             self.marker_size,
             self.marker_dict,
         )
-
+        self.board.setLegacyPattern(True)
         self.camera_matrix = camera_matrix
         self.dist_coeffs = dist_coeffs
 
@@ -97,12 +97,14 @@ class CharucoBoardHandler:
 
         # disable corner refinement of marker detection as recommended in
         # https://docs.opencv.org/4.2.0/df/d4a/tutorial_charuco_detection.html
-        params = cv2.aruco.DetectorParameters_create()
-        params.cornerRefinementMethod = cv2.aruco.CORNER_REFINE_NONE
+        params = cv2.aruco.DetectorParameters()
+        #params.cornerRefinementMethod = cv2.aruco.CORNER_REFINE_NONE
+        #detector = cv2.aruco.CharucoDetector(self.board, params)
 
         corners, ids, rejected = cv2.aruco.detectMarkers(
             image, self.marker_dict, parameters=params
         )
+        #corners, ids, rejected = detector.detectMarkers(image)
 
         if ids is not None:
             (
@@ -117,6 +119,7 @@ class CharucoBoardHandler:
                 cameraMatrix=self.camera_matrix,
                 distCoeffs=self.dist_coeffs,
             )
+            #(charuco_corners, charuco_ids, marker_corners, marker_ids) = detector.detectBoard()
 
             if charuco_ids is not None and self.camera_matrix is not None:
                 valid, rvec, tvec = cv2.aruco.estimatePoseCharucoBoard(
@@ -163,7 +166,7 @@ class CharucoBoardHandler:
             )
 
             if rvec is not None and tvec is not None:
-                debug_image = cv2.aruco.drawAxis(
+                debug_image = cv2.drawFrameAxes(
                     debug_image,
                     self.camera_matrix,
                     self.dist_coeffs,

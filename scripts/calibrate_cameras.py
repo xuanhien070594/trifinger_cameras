@@ -13,8 +13,8 @@ import os
 import glob
 
 
-BOARD_SIZE_X = 5
-BOARD_SIZE_Y = 10
+BOARD_SIZE_X = 7
+BOARD_SIZE_Y = 5
 BOARD_SQUARE_SIZE = 0.04
 BOARD_MARKER_SIZE = 0.03
 
@@ -103,10 +103,20 @@ def calibrate_extrinsic_parameters(
         charuco_centralized_image_filename, visualize=False
     )
 
-    # projection_matrix = np.zeros((4, 4))
+    Tvec = np.array([0.0, 0.0, 0.0055], dtype="float32").reshape((3, 1))
+    tvec += Tvec
+
+    # rotation around the y-axis (pattern coordinate system)
+    yrot = np.array([0, 1, 0]) * np.pi
+    yMat = cv2.Rodrigues(yrot)[0]
+
+    projection_matrix = np.zeros((4, 4))
     projection_matrix = utils.rodrigues_to_matrix(rvec)
     projection_matrix[0:3, 3] = tvec[:, 0]
     projection_matrix[3, 3] = 1
+
+    projection_matrix[:3, :3] = projection_matrix[:3, :3] @ yMat
+    rvec, _ = cv2.Rodrigues(projection_matrix[:3, :3])
 
     calibration_data["projection_matrix"] = dict()
     calibration_data["projection_matrix"]["rows"] = 4
@@ -128,12 +138,12 @@ def calibrate_extrinsic_parameters(
                 [
                     [0, 0, 0],
                     [0, 1, 0],
-                    [1, 0, 0],
-                    [1, 1, 0],
+                    [-1, 0, 0],
+                    [-1, 1, 0],
                     [0, 0, 1],
                     [0, 1, 1],
-                    [1, 0, 1],
-                    [1, 1, 1],
+                    [-1, 0, 1],
+                    [-1, 1, 1],
                 ],
                 dtype=np.float32,
             )
@@ -181,8 +191,8 @@ def calibrate_extrinsic_parameters(
         for p1, p2 in point_pairs:
             cv2.line(
                 img,
-                tuple(imgpoints[p1, 0]),
-                tuple(imgpoints[p2, 0]),
+                tuple(map(int, tuple(imgpoints[p1, 0]))),
+                tuple(map(int, tuple(imgpoints[p2, 0]))),
                 [200, 200, 0],
                 thickness=2,
             )
