@@ -64,6 +64,7 @@ def calibrate_extrinsic_parameters(
     calibration_results_file,
     charuco_centralized_image_filename,
     extrinsic_calibration_filename,
+    camera_name,
     impose_cube=True,
 ):
     """Calibrate extrinsic parameters of the camera given one image taken for
@@ -89,6 +90,9 @@ def calibrate_extrinsic_parameters(
 
     camera_matrix = config_matrix(calibration_data["camera_matrix"])
     dist_coeffs = config_matrix(calibration_data["distortion_coefficients"])
+    calibration_data["camera_name"] = camera_name
+    calibration_data["image_height"] = 540
+    calibration_data["image_width"] = 540
 
     handler = CharucoBoardHandler(
         BOARD_SIZE_X,
@@ -102,26 +106,25 @@ def calibrate_extrinsic_parameters(
     rvec, tvec = handler.detect_board_in_image(
         charuco_centralized_image_filename, visualize=False
     )
-
-    Tvec = np.array([0.0, 0.0, 0.0055], dtype="float32").reshape((3, 1))
-    tvec += Tvec
-
     # rotation around the y-axis (pattern coordinate system)
     yrot = np.array([0, 1, 0]) * np.pi
     yMat = cv2.Rodrigues(yrot)[0]
 
     projection_matrix = np.zeros((4, 4))
     projection_matrix = utils.rodrigues_to_matrix(rvec)
-    projection_matrix[0:3, 3] = tvec[:, 0]
     projection_matrix[3, 3] = 1
-
+    
+    Tvec = np.array([0.0, 0.0, 0.0055], dtype="float32").reshape((3, 1))
+    tvec += projection_matrix[:3, :3] @ Tvec
+    projection_matrix[0:3, 3] = tvec[:, 0]
+    
     projection_matrix[:3, :3] = projection_matrix[:3, :3] @ yMat
     rvec, _ = cv2.Rodrigues(projection_matrix[:3, :3])
 
-    calibration_data["projection_matrix"] = dict()
-    calibration_data["projection_matrix"]["rows"] = 4
-    calibration_data["projection_matrix"]["cols"] = 4
-    calibration_data["projection_matrix"][
+    calibration_data["tf_world_to_camera"] = dict()
+    calibration_data["tf_world_to_camera"]["rows"] = 4
+    calibration_data["tf_world_to_camera"]["cols"] = 4
+    calibration_data["tf_world_to_camera"][
         "data"
     ] = projection_matrix.flatten().tolist()
 
@@ -460,6 +463,11 @@ def main():
         ],
         help="""Action that is executed.""",
     )
+    parser.add_argument(
+        "--camera_name",
+        type=str,
+        help="""Specify camera name""",
+    )
 
     parser.add_argument(
         "--intrinsic_calibration_filename",
@@ -508,6 +516,7 @@ def main():
             args.intrinsic_calibration_filename,
             args.image_view_filename,
             args.extrinsic_calibration_filename,
+            args.camera_name,
             impose_cube=True,
         )
 
